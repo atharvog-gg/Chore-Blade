@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHOREBLADE / SWEEPPROTOCOL - Arcade Digital Triage Slasher</title>
+  <link rel="stylesheet" href="css/cyberpunk-arcade.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+</head>
+<body>
+
+  <!-- CRT Retro Scanlines Overlay -->
+  <div class="crt-scanlines"></div>
+
+  <!-- Top Telemetry Header HUD -->
+  <header class="hud-top-bar">
+    <div class="hud-brand">
+      <div class="brand-title">
+        <span>⚔️ CHOREBLADE</span>
+      </div>
+      <div class="brand-subtitle">SWEEP_PROTOCOL v3.4</div>
+      <div id="hudModeBadge" class="mode-badge sandbox">SIMULATED VFS SANDBOX</div>
+    </div>
+
+    <!-- Live Disk & Game Metrics -->
+    <div class="hud-stats-group">
+      <div class="stat-item">
+        <span class="stat-label">RECLAIMED STORAGE</span>
+        <span id="hudBytesReclaimed" class="stat-value reclaimed">0 B</span>
+      </div>
+
+      <div class="stat-item">
+        <span class="stat-label">DISK ENTROPY</span>
+        <div class="entropy-wrapper">
+          <div class="entropy-bar-track">
+            <div id="hudEntropyBar" class="entropy-bar-fill"></div>
+          </div>
+          <span id="hudEntropyText" class="stat-value">100%</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <span class="stat-label">TRIAGED / TOTAL</span>
+        <span id="hudTriagedCount" class="stat-value">0 / 0</span>
+      </div>
+
+      <div class="stat-item">
+        <span class="stat-label">TRIAGE SPEED</span>
+        <span id="hudApmCounter" class="stat-value">0 APM</span>
+      </div>
+
+      <!-- Animated Combo Multiplier -->
+      <div id="hudComboBadge" class="combo-badge">x2 COMBO</div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="hud-controls-group">
+      <button id="btnConnectReal" class="btn-cyber" title="Connect a real folder via Web File System Access API">
+        <span>📂</span> CONNECT REAL FOLDER
+      </button>
+      <button id="btnSelectPreset" class="btn-cyber" title="Choose from curated messy digital scenarios">
+        <span>🧪</span> SANDBOX SCENARIOS
+      </button>
+      <button id="btnInjectClutter" class="btn-cyber" title="Spawn 15 more chaotic files into arena">
+        <span>⚡</span> INJECT CLUTTER
+      </button>
+      <button id="btnToggleLedger" class="btn-cyber accent" title="Open Temporal Rewind Buffer">
+        <span>⏪</span> UNDO LEDGER (<span id="ledgerTxCount">0 OPS</span>)
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Floating Weapon / Triage Toolbar -->
+  <nav class="dock-weapon-bar">
+    <button class="weapon-btn active" data-tool="blade" title="Slice with laser blade to sort and archive by category">
+      <span class="hotkey">1 / Q</span>
+      <span>⚔️ CHORE BLADE (SORT)</span>
+    </button>
+    <button class="weapon-btn" data-tool="blaster" title="Vaporize junk files with plasma blast (soft-deletes to safe trash)">
+      <span class="hotkey">2 / R-CLK</span>
+      <span>💥 PLASMA BLASTER (TRASH)</span>
+    </button>
+    <button class="weapon-btn" data-tool="shield" title="Parry high-threat executables and scripts into quarantine vault">
+      <span class="hotkey">3 / SPACE</span>
+      <span>🛡️ STASIS PARRY (QUARANTINE)</span>
+    </button>
+    <button class="weapon-btn" data-tool="vortex" title="Spawn gravity well to compress loose files into zip archive">
+      <span class="hotkey">4 / C</span>
+      <span>🌀 SINGULARITY (COMPRESS)</span>
+    </button>
+    <button class="weapon-btn" data-tool="cleanse" title="Sanitize messy file names (removes duplicates, bad chars, casing)">
+      <span class="hotkey">5 / R</span>
+      <span>✨ CLEANSE STRIKE (RENAME)</span>
+    </button>
+    <button class="weapon-btn undo-btn" data-tool="undo" title="Rollback the last atomic triage action instantly">
+      <span class="hotkey">Z / CTRL+Z</span>
+      <span>⏪ CHRONO REWIND (UNDO)</span>
+    </button>
+  </nav>
+
+  <!-- Right Floating Game Mode Switcher -->
+  <aside class="dock-mode-toggle">
+    <button id="btnModeRush" class="mode-btn active" title="Files drift towards buffer overflow threshold">HYPER RUSH</button>
+    <button id="btnModeArena" class="mode-btn" title="Zero-G floating orbital arena">ZERO-G ARENA</button>
+  </aside>
+
+  <!-- High-Speed Arcade Combat Viewport -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Bottom Real-Time Terminal HUD -->
+  <footer class="hud-bottom-terminal">
+    <!-- Col 1: Live Terminal Syscalls & Operations -->
+    <div class="term-col-logs">
+      <div class="term-header">
+        <div class="term-title">
+          <span>>_</span> LIVE DISK / API SYSCALL STREAM
+        </div>
+        <div class="term-filters">
+          <button class="term-filter-btn active" data-filter="ALL">ALL</button>
+          <button class="term-filter-btn" data-filter="IO">I/O MUTATIONS</button>
+          <button class="term-filter-btn" data-filter="ROLLBACK">ROLLBACKS</button>
+          <button class="term-filter-btn" data-filter="WARN_ERR">WARNINGS</button>
+          <button id="btnClearLogs" class="term-filter-btn">CLEAR</button>
+        </div>
+      </div>
+      <div id="terminalLogs" class="term-logs-scroller">
+        <!-- Live log rows stream here -->
+      </div>
+    </div>
+
+    <!-- Col 2: Target Telemetry & Hex Inspector -->
+    <div class="term-col-inspector">
+      <div class="term-header">
+        <div class="term-title">
+          <span>🔍</span> TARGET TELEMETRY & HEX INSPECTOR
+        </div>
+      </div>
+      <div id="hudInspectorPanel" class="inspector-body">
+        <div class="inspector-idle">
+          <span class="blinking-cursor">></span> TARGET LOCK: IDLE
+          <div class="hint-text">HOVER TARGET OR BLADE TO INSPECT FILE SIGNATURE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 3: Audio Spectrum & Sound Settings -->
+    <div class="term-col-audio">
+      <div class="audio-vis-header">
+        <span>AUDIO SPECTRUM VISUALIZER</span>
+        <button id="btnToggleMute" class="audio-btn-sm">MUTE</button>
+      </div>
+      <canvas id="hudAudioCanvas" width="220" height="48"></canvas>
+      <div class="audio-controls-row">
+        <button id="btnToggleBgm" class="audio-btn-sm active">BGM: ON</button>
+        <span class="tempo-tag">TEMPO: 124 BPM</span>
+      </div>
+      <div class="audio-sliders">
+        <div class="slider-group">
+          <span>SFX</span>
+          <input type="range" id="sliderSfx" min="0" max="1" step="0.05" value="0.7">
+        </div>
+        <div class="slider-group">
+          <span>BGM</span>
+          <input type="range" id="sliderBgm" min="0" max="1" step="0.05" value="0.35">
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Slide-out Temporal Undo Ledger Drawer -->
+  <aside id="ledgerDrawer" class="ledger-drawer">
+    <div class="ledger-header">
+      <div class="ledger-title">
+        <span>⏪</span> TEMPORAL REWIND BUFFER
+      </div>
+      <button id="btnCloseLedger" class="modal-close-btn">&times;</button>
+    </div>
+
+    <div class="ledger-actions-bar">
+      <button id="btnUndoLast" class="btn-cyber accent">REWIND LAST (CTRL+Z)</button>
+      <button id="btnUndoAll" class="btn-cyber">REWIND ALL</button>
+      <button id="btnExportLedger" class="btn-cyber">EXPORT JSON</button>
+    </div>
+
+    <div id="ledgerTxList" class="ledger-list">
+      <!-- Live transaction receipts stream here -->
+    </div>
+  </aside>
+
+  <!-- Sandbox Presets Modal -->
+  <div id="presetModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">SELECT SIMULATED MESSY SCENARIO</div>
+        <button id="btnClosePresetModal" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="preset-grid">
+        <div class="preset-card" data-preset="CHAOTIC_DOWNLOADS">
+          <div class="preset-title">🌪️ Chaotic Downloads Abyss</div>
+          <div class="preset-desc">Years of unorganized downloads: duplicate installers, giant dumps, meme images, and zero-byte scraps.</div>
+          <div class="preset-tag">25 FILES • DIVERSE JUNK</div>
+        </div>
+
+        <div class="preset-card" data-preset="DEVELOPER_NIGHTMARE">
+          <div class="preset-title">💻 Developer Caches & Log Torrent</div>
+          <div class="preset-desc">Gigabytes of orphaned build outputs, nested node_modules dumps, stale test videos, and infinite log files.</div>
+          <div class="preset-tag">13 FILES • HUGE DISK HOGS</div>
+        </div>
+
+        <div class="preset-card" data-preset="SCREENSHOT_SWARM">
+          <div class="preset-title">📸 The Screenshot Cemetery</div>
+          <div class="preset-desc">Dozens of high-res desktop captures, UI crops, receipts, and duplicate meme snippets clogging your drive.</div>
+          <div class="preset-tag">32 FILES • IMAGE CLUTTER</div>
+        </div>
+
+        <div class="preset-card" data-preset="THREAT_CONTAINMENT">
+          <div class="preset-title">☣️ Suspicious Payloads & Scripts</div>
+          <div class="preset-desc">Unsigned scripts, mystery batch files, obscure installers, and disguised trojans demanding quarantine.</div>
+          <div class="preset-tag">8 THREATS • HIGH SECURITY</div>
+        </div>
+
+        <div class="preset-card" data-preset="TITAN_BOSS_ENCOUNTER">
+          <div class="preset-title">👾 The Gigabyte Leviathan Encounter</div>
+          <div class="preset-desc">A colossal 2.45 GB Raw Database dump surrounded by a protective swarm of 24 temp mites.</div>
+          <div class="preset-tag">1 BOSS + 24 MINIONS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio-engine.js"></script>
+  <script src="js/sandbox-data.js"></script>
+  <script src="js/file-system-engine.js"></script>
+  <script src="js/undo-ledger.js"></script>
+  <script src="js/terminal-hud.js"></script>
+  <script src="js/game-engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Large generated mock test files
+test-vault/
+*.iso
+*.dmp
+*.hprof
+
+# Sweep runtime folders created during local triage runs
+_SWEEP_SORTED_/
+_SWEEP_TRASH_RECOVERY_/
+_SWEEP_QUARANTINE_/
+_SWEEP_COMPRESSED_/
+.sweep_*
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.log
